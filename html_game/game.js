@@ -1,6 +1,9 @@
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
+const BG_COLOR = '#eceff1';
+const FLOOR_COLOR = '#b0bec5';
+
 class Entity {
   constructor(x, y, w, h, color) {
     this.x = x; this.y = y; this.w = w; this.h = h; this.color = color;
@@ -17,6 +20,12 @@ class Player extends Entity {
     this.speed = 4;
     this.health = 100;
   }
+  draw() {
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.arc(this.x + this.w / 2, this.y + this.h / 2, this.w / 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
   move(dir) {
     this.x += dir * this.speed;
     this.x = Math.max(0, Math.min(canvas.width - this.w, this.x));
@@ -28,6 +37,12 @@ class Zombie extends Entity {
     super(x, y, 40, 40, '#8d6e63');
     this.speed = 1 + Math.random();
   }
+  draw() {
+    ctx.fillStyle = this.color;
+    ctx.fillRect(this.x, this.y, this.w, this.h);
+    ctx.fillStyle = '#2e7d32';
+    ctx.fillRect(this.x + 5, this.y + 5, this.w - 10, this.h - 10);
+  }
   update() {
     this.x -= this.speed;
   }
@@ -37,6 +52,15 @@ class Item extends Entity {
   constructor(x, y) {
     super(x, y, 10, 10, '#ffab40');
     this.speed = 6;
+  }
+  draw() {
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.moveTo(this.x, this.y);
+    ctx.lineTo(this.x + this.w, this.y + this.h / 2);
+    ctx.lineTo(this.x, this.y + this.h);
+    ctx.closePath();
+    ctx.fill();
   }
   update() {
     this.x += this.speed;
@@ -49,12 +73,19 @@ let items = [];
 let keys = {};
 let spawnTimer = 0;
 
+function drawBackground() {
+  ctx.fillStyle = BG_COLOR;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = FLOOR_COLOR;
+  ctx.fillRect(0, canvas.height - 50, canvas.width, 50);
+}
+
 function spawnZombie() {
   zombies.push(new Zombie(canvas.width - 50, canvas.height - 60));
 }
 
 function update() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawBackground();
   if (keys['ArrowLeft']) player.move(-1);
   if (keys['ArrowRight']) player.move(1);
   spawnTimer++;
@@ -77,6 +108,7 @@ function update() {
   items.forEach(it => it.draw());
   ctx.fillStyle = 'black';
   ctx.fillText('Health: ' + player.health, 10, 20);
+  ctx.fillText('Arrows: move  |  Space: throw', canvas.width - 230, 20);
   if (player.health <= 0) {
     ctx.fillText('Game Over', canvas.width / 2 - 30, canvas.height / 2);
     return;
